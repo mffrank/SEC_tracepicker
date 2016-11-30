@@ -66,20 +66,25 @@ plot.traces <- function(traces.long,
   }  else {
     traces.long.s <- traces.long
   }
-
-    pl <- ggplot(traces.long.s) +
-      ggtitle(paste(trace_type, 'traces')) +
+  if(log){
+    traces.long.s$intensity <- log10(traces.long.s$intensity)
+    traces.long.s$intensity <- replace(traces.long.s$intensity, which(traces.long.s$intensity == -Inf),0)
+  }
+    pl <- ggplot(traces.long.s, aes(key = id)) +
+      # ggtitle(paste(trace_type, 'traces')) +
       xlab('fraction') + ylab('intensity') +
-      coord_cartesian(xlim = ranges$x)
-      
+      coord_cartesian(xlim = ranges$x, ylim = ranges$y)
+    
+    pl <- pl + geom_point(aes(x=fraction, y=intensity, color=id),alpha = 0)
     pl <- pl + geom_line(aes(x=fraction, y=intensity, color=id))
+    
     if (!ledgend) {
       pl <- pl + theme(legend.position="none")
     }
     if (plot) plot(pl)
-    if (log) {
-      pl <- pl + scale_y_log10('log(intensity)')
-    }
+    # if (log) {
+    #   pl <- pl + scale_y_log10('log(intensity)')
+    # }
     if(!is.null(apex_man$sel)){
       pl <- pl + geom_vline(xintercept=apex_man$sel, colour="darkgrey", linetype="solid")
     }
@@ -87,5 +92,49 @@ plot.traces <- function(traces.long,
       pl <- pl + geom_vline(xintercept=apex_man$bound_left,linetype="dashed")
       pl <- pl + geom_vline(xintercept=apex_man$bound_right,linetype="dashed")
     }
-    pl
+    return(pl)
 }
+
+
+plot.traces_plotly <- function(traces.long,
+                        ranges = NULL,
+                        apex_man = NULL,
+                        plot=TRUE,
+                        ledgend = TRUE,
+                        log = FALSE,
+                        trace_type = "Peptide") {
+  
+  if(!is.null(ranges$x[1])){
+    traces.long.s <- subset(traces.long,fraction %in% ranges$x[1]:ranges$x[2] )
+  }  else {
+    traces.long.s <- traces.long
+  }
+  
+  pl <- plot_ly(traces.long.s, x = ~fraction, y = ~intensity) %>%
+          add_lines(color = ~id) %>%
+          layout(
+            xaxis = list(range = ranges$x),
+            yaxis = list(range = ranges$y),
+            dragmode = "select")
+    # ggtitle(paste(trace_type, 'traces')) +
+    # xlab('fraction') + ylab('intensity') +
+    # coord_cartesian(xlim = ranges$x, ylim = ranges$y)
+  
+  # pl <- pl + geom_line(aes(x=fraction, y=intensity, color=id))
+  # if (!ledgend) {
+  #   pl <- pl + theme(legend.position="none")
+  # }
+  # if (plot) plot(pl)
+  # if (log) {
+  #   pl <- pl + scale_y_log10('log(intensity)')
+  # }
+  # if(!is.null(apex_man$sel)){
+  #   pl <- pl + geom_vline(xintercept=apex_man$sel, colour="darkgrey", linetype="solid")
+  # }
+  # if (!is.null(apex_man$bound_right)){
+  #   pl <- pl + geom_vline(xintercept=apex_man$bound_left,linetype="dashed")
+  #   pl <- pl + geom_vline(xintercept=apex_man$bound_right,linetype="dashed")
+  # }
+  pl
+}
+
