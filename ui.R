@@ -1,4 +1,5 @@
 
+library(plotly)
 
 jscode <- '
 $(function() {
